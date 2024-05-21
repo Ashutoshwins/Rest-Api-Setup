@@ -8,8 +8,8 @@ import { UserSchema, loginSchema } from "../../utils/schema/userValidate";
 import { AuthService } from "../auth/validateAuthService";
 import { ApiResponse } from "../../utils/functions/apiResponse";
 import LogsMessage from "../../utils/enum/loggerMessage";
-import {logger} from "../../utils/functions/logger"
-
+import {logger} from "../../utils/functions/logger";
+import * as Time from "../../utils/enum/Time";
 
 export default class UserService implements IUserService.IUserServiceAPI {
   private storage = new userStore();
@@ -32,9 +32,10 @@ export default class UserService implements IUserService.IUserServiceAPI {
     const params = await this.authService.validate(UserSchema, request);
     const { email,  password } = params.value;
     if (params.error) {
-      logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params.error))
+      logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params.error));
       return this.apiResponse.setResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.INVALID_REQUEST, error: params.error.details }, {});
     }
+    const now = Time.now();
     params.value.password = await this.authService.createHashedPassword(password);
     const attributes = {
       ...params.value,
@@ -42,7 +43,7 @@ export default class UserService implements IUserService.IUserServiceAPI {
       isVerified: false,
       isActive: false,
       meta: {
-        createdAt: Date.now(),
+        createdAt:now
       },
     };
     // exist-user
@@ -50,25 +51,25 @@ export default class UserService implements IUserService.IUserServiceAPI {
     try {
       existingUser = await this.storage.getByAttributes({ email });
     } catch (e) {
-      logger.error(LogsMessage.INTERNAL_SERVER_ERROR, JSON.stringify(params?.value))
+      logger.error(LogsMessage.INTERNAL_SERVER_ERROR, JSON.stringify(params?.value));
       return this.apiResponse.setResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { message: e.message, success: false }, {});
     }
 
     if (existingUser && existingUser.email) {
       // Check if email is verified 
       if (existingUser && existingUser.email) {
-        logger.error(LogsMessage.DUPLICATE_USER_EXIST, JSON.stringify(params?.value))
+        logger.error(LogsMessage.DUPLICATE_USER_EXIST, JSON.stringify(params?.value));
         return this.apiResponse.setResponse(StatusCodeEnum.BAD_REQUEST, { message: ErrorMessageEnum.DUPLICATE_USER_EXIST, success: false }, {});
       }
       let user: IUser;
       try {
         user = await this.storage.register(attributes);
         if (!user) {
-          logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value))
+          logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value));
           return this.apiResponse.setResponse(StatusCodeEnum.BAD_REQUEST, { message: ErrorMessageEnum.INVALID_REQUEST, success: false }, {});
         }
       } catch (e) {
-        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value))
+        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value));
         return this.apiResponse.setResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: e.message }, {});
       }
       response.status = StatusCodeEnum.OK;
@@ -78,7 +79,11 @@ export default class UserService implements IUserService.IUserServiceAPI {
 
   };
 
-// user login api 
+    /**
+   * @param  {IUserService.ILoginUserRequest} request
+   * Desc: Login a User
+   * @returns Promise
+   */
   public login = async (
     request: IUserService.ILoginUserRequest
   ): Promise<IUserService.ILoginUserResponse> => {
@@ -89,7 +94,7 @@ export default class UserService implements IUserService.IUserServiceAPI {
       const params = await this.authService.validate(loginSchema, request);
 
       if (params.error) {
-        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.error))
+        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.error));
         return this.apiResponse.setResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.INVALID_REQUEST, error: params.error.details }, {});
       }
       const { email, password } = params.value;
@@ -99,25 +104,25 @@ export default class UserService implements IUserService.IUserServiceAPI {
       try {
         user = await this.storage.getByAttributes(email);
       } catch (e) {
-        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value))
+        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value));
         return this.apiResponse.setResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: e.message }, {});
       }
 
       if (!user) {
-        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value))
+        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value));
         return this.apiResponse.setResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.INVALID_REQUEST }, {});
       }
       // check If user email has been verified 
       const comparePassword = await this.authService.comparePassword(password, user.password);
       if (!comparePassword) {
-        logger.error(LogsMessage.PASSWORD_NOT_MATCH, JSON.stringify(params?.value))
+        logger.error(LogsMessage.PASSWORD_NOT_MATCH, JSON.stringify(params?.value));
         return this.apiResponse.setResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.PASSWORD_NOT_MATCH }, {});
       }
-      let token: any = await this.authService.createToken(user);
+      const token: any = await this.authService.createToken(user);
       const response: any = { ...user, token };
       return this.apiResponse.setResponse(StatusCodeEnum.OK, { success: true, message: ErrorMessageEnum.LOGIN_SUCCESSFULY, data: response }, {});
     } catch (err) {
-      logger.error(LogsMessage.INTERNAL_SERVER_ERROR, JSON.stringify(err))
+      logger.error(LogsMessage.INTERNAL_SERVER_ERROR, JSON.stringify(err));
       return this.apiResponse.setResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: err.message }, {});
     }
   };
