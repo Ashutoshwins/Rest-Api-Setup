@@ -1,7 +1,7 @@
-import express, { Application } from 'express';
-import { json } from 'body-parser';
-import { connect, ConnectOptions } from 'mongoose';
-import { MONGO_DB_CONNECTION_STRING } from './env';
+import express, { Application } from "express";
+import { json } from "body-parser";
+import { connect, ConnectOptions } from "mongoose";
+import { MONGO_DB_CONNECTION_STRING } from "./env";
 import route from "./routes";
 
 export default class App {
@@ -21,10 +21,10 @@ export default class App {
       useNewUrlParser: true,
     } as ConnectOptions)
       .then(() => {
-        console.log('Connected to MongoDB...');
+        console.log("Connected to MongoDB...");
       })
       .catch((e) => {
-        console.error('There was an error connecting to MongoDB:');
+        console.error("There was an error connecting to MongoDB:");
         console.error(e);
       });
   }

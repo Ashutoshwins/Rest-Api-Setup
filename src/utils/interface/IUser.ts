@@ -1,4 +1,4 @@
-import IMetaData from "../../utils/interface/IMeta"
+import IMetaData from "../../utils/interface/IMeta";
 export default interface IUser {
   _id?: string;
   firstName?: string;

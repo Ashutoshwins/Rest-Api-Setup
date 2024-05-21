@@ -49,4 +49,4 @@ export default {
         required: false,
       },
     meta: MetaData
-}
+};

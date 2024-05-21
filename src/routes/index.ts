@@ -4,14 +4,15 @@ import ROUTES from "./routes";
 
 
 export default async (app: Application) => {
-    registerUserRoutes(app);
-  };
+  userRoutes(app);
+};
 
-  
-function registerUserRoutes(app: Application) {
-    const user = ROUTES.USER_ROUTES;
-    app
-      // Create Operations
-      .post(user.CREATE_USER, proxy.user.register)
-      
-  }
+
+function userRoutes(app: Application) {
+  const user = ROUTES.USER_ROUTES;
+  app
+    // Create Operations
+    .post(user.CREATE_USER, proxy.user.register)
+    .post(user.LOGIN_USER, proxy.user.login);
+
+}
