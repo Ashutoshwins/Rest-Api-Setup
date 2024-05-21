@@ -2,7 +2,7 @@
 import * as bcrypt from "bcrypt";
 import IUser from "../../utils/interface/IUser";
 import * as jwt from "jsonwebtoken";
-import { ApiResponse } from "../../utils/functions/ApiResponse";
+import { ApiResponse } from "../../utils/functions/apiResponse";
 import { JWT_SECRET } from "../../env";
 
 
@@ -12,7 +12,6 @@ export class AuthService {
     protected userService: any;
     constructor() {
         this.apiResponse = new ApiResponse();
-        // this.userService = new UserService();
     }
     public static OPERATION_UNSUCCESSFUL = class extends Error {
         constructor() {
@@ -85,42 +84,6 @@ export class AuthService {
         }
         return Number(randomNumber);
     }
-
-    /**
-     * Description: Authenticate token
-     * @param  {any} event
-     * @returns Promise
-     */
-    //   public async authenticate(event: any): Promise<any> {
-    //     try {
-    //       const token = await this.extractBearerToken(event.headers);
-    //       if (!token) {
-    //         return this.apiResponse.setResponse(StatusCodeEnum.UNAUTHORIZED, { message: ErrorMessageEnum.UNAUTHORIZED, status: false }, {});
-    //       }
-    //       const decoded: any = jwt.verify(token, JWT_SECRET);
-    //       if (!decoded || !decoded._id) {
-    //         return this.apiResponse.setResponse(StatusCodeEnum.UNAUTHORIZED, { message:ErrorMessageEnum.INVALID_TOKEN, status: false }, {});
-    //       }
-
-    //       // Confirm if user exist
-    //       const user: IUser = await this.userService.findById(decoded._id);
-    //       if (!user) {
-    //         return this.apiResponse.setResponse(StatusCodeEnum.UNAUTHORIZED, { message: ErrorMessageEnum.INVALID_TOKEN, status: false }, {});
-    //       }
-
-    //       event.user = {
-    //         _id: decoded._id,
-    //         firstName: user?.firstName,
-    //         lastName: user?.lastName,
-    //         email: user?.email,
-    //         deviceToken: user?.deviceToken
-    //       };
-    //       return true;
-    //     } catch (err) {
-    //       return this.apiResponse.setResponse(StatusCodeEnum.UNAUTHORIZED, { message: "Invalid auth token", status: false }, {});
-    //     }
-    //   }
-
     /**
      * Description: Extract the token from the authorization
      * @param  {{authorization:string}} headers
