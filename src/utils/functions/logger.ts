@@ -1,5 +1,5 @@
 import * as winston from "winston";
-const { MongoDB } = require("winston-mongodb");
+import { MongoDB } from "winston-mongodb";
 import{ MONGO } from "../../env";
 export const logger = winston.createLogger({
     transports: [
