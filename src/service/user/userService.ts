@@ -4,9 +4,11 @@ import * as IUserService from "./IUserServices";
 import { IAppServiceProxy } from "../AppServiceProxy";
 import userStore from "../user/userStore";
 import IUser from "./../../utils/interface/IUser";
-import { UserSchema, loginSchema } from "../../utils/Schema/userValidate";
+import { UserSchema, loginSchema } from "../../utils/schema/userValidate";
 import { AuthService } from "../auth/validateAuthService";
-import { ApiResponse } from "../../utils/functions/ApiResponse";
+import { ApiResponse } from "../../utils/functions/apiResponse";
+import LogsMessage from "../../utils/enum/loggerMessage";
+import {logger} from "../../utils/functions/logger"
 
 
 export default class UserService implements IUserService.IUserServiceAPI {
@@ -27,13 +29,11 @@ export default class UserService implements IUserService.IUserServiceAPI {
     const response: IUserService.IRegisterUserResponse = {
       status: StatusCodeEnum.UNKNOWN_CODE
     };
-    const params = UserSchema.validate(request, { abortEarly: false });
+    const params = await this.authService.validate(UserSchema, request);
     const { email,  password } = params.value;
     if (params.error) {
-      console.error(params.error);
-      response.status = StatusCodeEnum.UNPROCESSABLE_ENTITY;
-      response.error = params.error;
-      return response;
+      logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params.error))
+      return this.apiResponse.setResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.INVALID_REQUEST, error: params.error.details }, {});
     }
     params.value.password = await this.authService.createHashedPassword(password);
     const attributes = {
@@ -50,22 +50,25 @@ export default class UserService implements IUserService.IUserServiceAPI {
     try {
       existingUser = await this.storage.getByAttributes({ email });
     } catch (e) {
-      console.error(e);
+      logger.error(LogsMessage.INTERNAL_SERVER_ERROR, JSON.stringify(params?.value))
       return this.apiResponse.setResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { message: e.message, success: false }, {});
     }
 
     if (existingUser && existingUser.email) {
       // Check if email is verified 
       if (existingUser && existingUser.email) {
+        logger.error(LogsMessage.DUPLICATE_USER_EXIST, JSON.stringify(params?.value))
         return this.apiResponse.setResponse(StatusCodeEnum.BAD_REQUEST, { message: ErrorMessageEnum.DUPLICATE_USER_EXIST, success: false }, {});
       }
       let user: IUser;
       try {
         user = await this.storage.register(attributes);
         if (!user) {
+          logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value))
           return this.apiResponse.setResponse(StatusCodeEnum.BAD_REQUEST, { message: ErrorMessageEnum.INVALID_REQUEST, success: false }, {});
         }
       } catch (e) {
+        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value))
         return this.apiResponse.setResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: e.message }, {});
       }
       response.status = StatusCodeEnum.OK;
@@ -75,6 +78,7 @@ export default class UserService implements IUserService.IUserServiceAPI {
 
   };
 
+// user login api 
   public login = async (
     request: IUserService.ILoginUserRequest
   ): Promise<IUserService.ILoginUserResponse> => {
@@ -82,8 +86,10 @@ export default class UserService implements IUserService.IUserServiceAPI {
       status: StatusCodeEnum.UNKNOWN_CODE,
     };
     try {
-      const params = loginSchema.validate(request, { abortEarly: false });
+      const params = await this.authService.validate(loginSchema, request);
+
       if (params.error) {
+        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.error))
         return this.apiResponse.setResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.INVALID_REQUEST, error: params.error.details }, {});
       }
       const { email, password } = params.value;
@@ -93,25 +99,25 @@ export default class UserService implements IUserService.IUserServiceAPI {
       try {
         user = await this.storage.getByAttributes(email);
       } catch (e) {
-        console.error(e);
+        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value))
         return this.apiResponse.setResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: e.message }, {});
       }
 
       if (!user) {
-        return this.apiResponse.setResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.FILE_REQUIRED }, {});
+        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value))
+        return this.apiResponse.setResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.INVALID_REQUEST }, {});
       }
       // check If user email has been verified 
       const comparePassword = await this.authService.comparePassword(password, user.password);
       if (!comparePassword) {
-        return this.apiResponse.setResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.EMAIL_ALREADY_EXIST }, {});
+        logger.error(LogsMessage.PASSWORD_NOT_MATCH, JSON.stringify(params?.value))
+        return this.apiResponse.setResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.PASSWORD_NOT_MATCH }, {});
       }
       let token: any = await this.authService.createToken(user);
-      const expireIn = Date.parse(new Date().toString()) + 30 * 60000;
-      const result: any = await Promise.allSettled([token]);
-      token = result[0].value;
-      const response: any = { ...user, token, expireIn };
-      return this.apiResponse.setResponse(StatusCodeEnum.OK, { success: true, message: ErrorMessageEnum.FILE_FAILED, data: response }, {});
+      const response: any = { ...user, token };
+      return this.apiResponse.setResponse(StatusCodeEnum.OK, { success: true, message: ErrorMessageEnum.LOGIN_SUCCESSFULY, data: response }, {});
     } catch (err) {
+      logger.error(LogsMessage.INTERNAL_SERVER_ERROR, JSON.stringify(err))
       return this.apiResponse.setResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: err.message }, {});
     }
   };

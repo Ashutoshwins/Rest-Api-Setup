@@ -17,6 +17,9 @@ enum MessageEnum {
   INVALID_PAYLOAD = "messages.error.invalidPayload",
   ACCOUNT_SUSPENDED = "ACCOUNT_SUSPENDED",
   DUPLICATE_USER_EXIST = "DUPLICATE_USER_EXIST",
+  LOGIN_SUCCESSFULY = "Login succesfull",
+  PASSWORD_NOT_MATCH = "Password does not  match",
+
 }
 
 export default MessageEnum;
