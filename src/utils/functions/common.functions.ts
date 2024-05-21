@@ -1,6 +1,6 @@
-import STATUS_CODES from '../enum/statusCodesEnum';
-import MessageEnum from '../enum/messageEnum';
-import { IError } from '../interface/common';
+import STATUS_CODES from "../enum/statusCodesEnum";
+import MessageEnum from "../enum/errorMessageEnum";
+import { IError } from "../interface/common";
 
 /**
  * Send standard error for invalid payload
@@ -22,7 +22,7 @@ export const sendPayloadError = (err, res) => {
  */
 export const SendResponse = (
   res: any,
-  data: any = { status: 400, message: 'Invalid Request' },
+  data: any = { status: 400, message: "Invalid Request" },
 ) => {
   res.status(data.status).send(data);
 };

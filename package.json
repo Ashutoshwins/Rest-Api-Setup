@@ -15,22 +15,15 @@
     "generate-unique-id": "^2.0.3",
     "graphql-tools": "^8.3.12",
     "handlebars": "^4.7.8",
-    "joi": "^17.6.0",
-    "jsonwebtoken": "^8.5.1",
+    "joi": "^17.13.1",
+    "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "mongoose": "^8.3.2",
-    "mysql2": "^3.6.5",
-    "node-cron": "^3.0.3",
     "nodemailer": "^6.9.13",
     "npm-watch": "^0.11.0",
-    "pg": "^8.10.0",
-    "pg-hstore": "^2.3.4",
-    "postmark": "^4.0.2",
     "sendmail": "^1.6.1",
-    "sequelize": "^6.35.2",
     "shortid": "^2.2.16",
-    "typescript": "^4.9.5",
-    "uuid": "^9.0.0"
+    "typescript": "^4.9.5"
   },
   "scripts": {
     "build": "tsc --jsx react --project . ",
@@ -42,7 +35,8 @@
     "lint": "eslint . --ext .ts",
     "lint-fix": "eslint . --ext .ts --fix",
     "prettier": "prettier --check '**/**/*.{js,ts}'",
-    "prettier:fix": "prettier --write '**/**/*.{js,ts}'"
+    "prettier:fix": "prettier --write '**/**/*.{js,ts}'",
+    "prepare": "husky install"
   },
   "watch": {
     "dev": {
@@ -60,13 +54,11 @@
     "@types/express": "^4.17.17",
     "@types/jsonwebtoken": "^8.5.8",
     "@types/node": "^20.2.5",
-    "@types/node-cron": "^3.0.11",
     "@typescript-eslint/eslint-plugin": "^5.44.0",
     "@typescript-eslint/parser": "^5.44.0",
     "eslint": "^8.28.0",
-    "nodemon": "^2.0.22",
-    "sequelize-auto": "^0.8.8",
-    "sequelize-cli": "^6.6.1"
+    "husky": "^9.0.11",
+    "nodemon": "^2.0.22"
   },
   "keywords": [],
   "author": "",
