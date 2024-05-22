@@ -3,7 +3,7 @@ import { IRequest, IResponse } from "../../utils/interface/common";
 
 export interface IUserServiceAPI {
   register(request: IRegisterUserRequest): Promise<IRegisterUserResponse>;
-  login(request:ILoginUserRequest):Promise<ILoginUserResponse>
+  login(request:ILoginUserRequest):Promise<void>
 }
 
 export interface IRegisterUserRequest extends IRequest {
