@@ -19,7 +19,6 @@ enum MessageEnum {
   DUPLICATE_USER_EXIST = "DUPLICATE_USER_EXIST",
   LOGIN_SUCCESSFULY = "Login succesfull",
   PASSWORD_NOT_MATCH = "Password does not  match",
-
 }
 
 export default MessageEnum;
