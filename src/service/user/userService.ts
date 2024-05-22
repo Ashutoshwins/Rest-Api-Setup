@@ -27,21 +27,20 @@ export default class UserService implements IUserService.IUserServiceAPI {
    * Desc: register a user
    * @returns Promise
    */
-  public register = async (request: IUserService.IRegisterUserRequest): Promise<IUserService.IRegisterUserResponse> => {
+  public register = async (request: IUserService.IRegisterUserRequest): Promise<void> => {
     const response: IUserService.IRegisterUserResponse = {
       status: StatusCodeEnum.UNKNOWN_CODE
     };
     const params = await this.authService.validate(UserSchema, request);
-    const { email, password } = params.value;
+    // const { email, password } = params.value;
     if (params.error) {
       logger.error(MessageEnum.logMessage.INVALID_REQUEST)
-      SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: MessageEnum.user.INVALID_REQUEST, error: params.error.details });
+      return SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: MessageEnum.user.INVALID_REQUEST, error: params.error.details });
     }
     const now = Time.now();
-    params.value.password = await this.authService.createHashedPassword(password);
+    params.value.password = await this.authService.createHashedPassword(params?.value?.password);
     const attributes = {
       ...params.value,
-      isSubscribed: false,
       isVerified: false,
       isActive: false,
       meta: {
@@ -51,33 +50,33 @@ export default class UserService implements IUserService.IUserServiceAPI {
     // exist-user
     let existingUser: IUser | null;
     try {
-      existingUser = await this.storage.getByAttributes({ email });
+      existingUser = await this.storage.getByAttributes(params.value?.email);
     } catch (e) {
-      logger.error(MessageEnum.logMessage.DUPLICATE_USER_EXIST,JSON.stringify(existingUser))
-      SendResponse(StatusCodeEnum.BAD_REQUEST, { message: MessageEnum.user.EMAIL_ALREADY_EXIST, success: false },);
+      logger.error(MessageEnum.logMessage.DUPLICATE_USER_EXIST, JSON.stringify(existingUser))
+      return SendResponse(StatusCodeEnum.BAD_REQUEST, { message: MessageEnum.user.EMAIL_ALREADY_EXIST, success: false },);
     }
 
     if (existingUser && existingUser.email) {
       // Check if email is verified 
       if (existingUser && existingUser.email) {
-        logger.error(MessageEnum.logMessage.DUPLICATE_USER_EXIST,JSON.stringify(existingUser))
-        SendResponse(StatusCodeEnum.BAD_REQUEST, { message: MessageEnum.user.DUPLICATE_USER_EXIST, success: false },);
+        logger.error(MessageEnum.logMessage.DUPLICATE_USER_EXIST, JSON.stringify(existingUser))
+        return SendResponse(StatusCodeEnum.BAD_REQUEST, { message: MessageEnum.user.DUPLICATE_USER_EXIST, success: false },);
       }
       let user: IUser;
       try {
         user = await this.storage.register(attributes);
         if (!user) {
-          logger.error(MessageEnum.logMessage.INVALID_PAYLOAD,JSON.stringify(attributes))
-          SendResponse(StatusCodeEnum.BAD_REQUEST, { message: MessageEnum.user.INVALID_REQUEST, success: false });
+          logger.error(MessageEnum.logMessage.INVALID_PAYLOAD, JSON.stringify(attributes))
+          return SendResponse(StatusCodeEnum.BAD_REQUEST, { message: MessageEnum.user.INVALID_REQUEST, success: false });
         }
       } catch (e) {
-        logger.error(MessageEnum.logMessage.INTERNAL_SERVER_ERROR,JSON.stringify(existingUser))
-        SendResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: MessageEnum.user.INTERNAL_SERVER_ERROR });
+        logger.error(MessageEnum.logMessage.INTERNAL_SERVER_ERROR, JSON.stringify(existingUser))
+        return SendResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: MessageEnum.user.INTERNAL_SERVER_ERROR });
       }
       response.status = StatusCodeEnum.OK;
       response.user = user;
-      return response;
     }
+
 
   };
 
@@ -96,36 +95,36 @@ export default class UserService implements IUserService.IUserServiceAPI {
       const params = await this.authService.validate(loginSchema, request);
 
       if (params.error) {
-        logger.error(MessageEnum.logMessage.INVALID_REQUEST,JSON.stringify(params.error))
-        SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: MessageEnum.user.INVALID_REQUEST, error: params.error.details });
+        logger.error(MessageEnum.logMessage.INVALID_REQUEST, JSON.stringify(params.error))
+        return SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: MessageEnum.user.INVALID_REQUEST, error: params.error.details });
       }
-      const { email, password } = params.value;
+      // const { email, password } = params.value;
 
       //Make sure that account associated with this email exists in the database
       let user: IUser;
       try {
-        user = await this.storage.getByAttributes(email);
+        user = await this.storage.getByAttributes(params.value?.email);
       } catch (e) {
         logger.error(MessageEnum.logMessage.INVALID_REQUEST, JSON.stringify(params.error))
-        SendResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: e.message });
+        return SendResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: e.message });
       }
 
       if (!user) {
-        logger.error(MessageEnum.logMessage.DUPLICATE_USER_EXIST,JSON.stringify(params.error))
-        SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message:  MessageEnum.user.INVALID_REQUEST });
+        logger.error(MessageEnum.logMessage.DUPLICATE_USER_EXIST, JSON.stringify(params.error))
+        return SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: MessageEnum.user.INVALID_REQUEST });
       }
       // check If user password has been verified 
-      const comparePassword = await this.authService.comparePassword(password, user.password);
+      const comparePassword = await this.authService.comparePassword(params.value?.password, user.password);
       if (!comparePassword) {
-        logger.error(MessageEnum.logMessage.DUPLICATE_USER_EXIST,JSON.stringify(params.error))
-        SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: MessageEnum.user.PASSWORD_NOT_MATCH });
+        logger.error(MessageEnum.logMessage.DUPLICATE_USER_EXIST, JSON.stringify(params.error))
+        return SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: MessageEnum.user.PASSWORD_NOT_MATCH });
       }
       const token: any = await this.authService.createToken(user);
       const response: any = { ...user, token };
-      SendResponse(StatusCodeEnum.OK, { success: true, message: MessageEnum.user.LOGIN_SUCCESSFULY, data: response });
+      return SendResponse(StatusCodeEnum.OK, { success: true, message: MessageEnum.user.LOGIN_SUCCESSFULY, data: response });
     } catch (err) {
-      logger.error(MessageEnum.logMessage.INTERNAL_SERVER_ERROR,JSON.stringify(err))
-      SendResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: err.message });
+      logger.error(MessageEnum.logMessage.INTERNAL_SERVER_ERROR, JSON.stringify(err))
+      return SendResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: err.message });
     }
   };
 }

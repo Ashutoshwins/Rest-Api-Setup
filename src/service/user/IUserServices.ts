@@ -2,7 +2,7 @@ import IUser from "../../utils/interface/IUser";
 import { IRequest, IResponse } from "../../utils/interface/common";
 
 export interface IUserServiceAPI {
-  register(request: IRegisterUserRequest): Promise<IRegisterUserResponse>;
+  register(request: IRegisterUserRequest): Promise<void>;
   login(request:ILoginUserRequest):Promise<void>
 }
 
