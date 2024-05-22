@@ -34,7 +34,7 @@ export default class UserService implements IUserService.IUserServiceAPI {
     const { email, password } = params.value;
     if (params.error) {
       logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params.error));
-      return this.apiResponse.sendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.INVALID_REQUEST, error: params.error.details });
+      SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.INVALID_REQUEST, error: params.error.details });
     }
     const now = Time.now();
     params.value.password = await this.authService.createHashedPassword(password);
