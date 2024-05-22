@@ -11,6 +11,7 @@ import LogsMessage from "../../utils/enum/loggerMessage";
 import { logger } from "../../utils/functions/logger";
 import * as Time from "../../utils/enum/Time";
 import { SendResponse } from "../../utils/functions/common.functions"
+import MessageEnum from "../../utils/enum/messageEnum";
 
 export default class UserService implements IUserService.IUserServiceAPI {
   private storage = new userStore();
@@ -33,8 +34,8 @@ export default class UserService implements IUserService.IUserServiceAPI {
     const params = await this.authService.validate(UserSchema, request);
     const { email, password } = params.value;
     if (params.error) {
-      logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params.error));
-      SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.INVALID_REQUEST, error: params.error.details });
+      logger.error(MessageEnum.logMessage.INVALID_REQUEST)
+      SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: MessageEnum.user.INVALID_REQUEST, error: params.error.details });
     }
     const now = Time.now();
     params.value.password = await this.authService.createHashedPassword(password);
@@ -52,27 +53,26 @@ export default class UserService implements IUserService.IUserServiceAPI {
     try {
       existingUser = await this.storage.getByAttributes({ email });
     } catch (e) {
-      logger.error(LogsMessage.INTERNAL_SERVER_ERROR, JSON.stringify(params?.value));
-      SendResponse(StatusCodeEnum.BAD_REQUEST, { message: e.message, success: false },);
-      // return this.apiResponse.sendResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { message: e.message, success: false });
+      logger.error(MessageEnum.logMessage.DUPLICATE_USER_EXIST,JSON.stringify(existingUser))
+      SendResponse(StatusCodeEnum.BAD_REQUEST, { message: MessageEnum.user.EMAIL_ALREADY_EXIST, success: false },);
     }
 
     if (existingUser && existingUser.email) {
       // Check if email is verified 
       if (existingUser && existingUser.email) {
-        logger.error(LogsMessage.DUPLICATE_USER_EXIST, JSON.stringify(params?.value));
-        SendResponse(StatusCodeEnum.BAD_REQUEST, { message: ErrorMessageEnum.DUPLICATE_USER_EXIST, success: false },);
+        logger.error(MessageEnum.logMessage.DUPLICATE_USER_EXIST,JSON.stringify(existingUser))
+        SendResponse(StatusCodeEnum.BAD_REQUEST, { message: MessageEnum.user.DUPLICATE_USER_EXIST, success: false },);
       }
       let user: IUser;
       try {
         user = await this.storage.register(attributes);
         if (!user) {
-          logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value));
-          SendResponse(StatusCodeEnum.BAD_REQUEST, { message: ErrorMessageEnum.INVALID_REQUEST, success: false });
+          logger.error(MessageEnum.logMessage.INVALID_PAYLOAD,JSON.stringify(attributes))
+          SendResponse(StatusCodeEnum.BAD_REQUEST, { message: MessageEnum.user.INVALID_REQUEST, success: false });
         }
       } catch (e) {
-        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value));
-        SendResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: e.message });
+        logger.error(MessageEnum.logMessage.INTERNAL_SERVER_ERROR,JSON.stringify(existingUser))
+        SendResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: MessageEnum.user.INTERNAL_SERVER_ERROR });
       }
       response.status = StatusCodeEnum.OK;
       response.user = user;
@@ -96,8 +96,8 @@ export default class UserService implements IUserService.IUserServiceAPI {
       const params = await this.authService.validate(loginSchema, request);
 
       if (params.error) {
-        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.error));
-        SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.INVALID_REQUEST, error: params.error.details });
+        logger.error(MessageEnum.logMessage.INVALID_REQUEST,JSON.stringify(params.error))
+        SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: MessageEnum.user.INVALID_REQUEST, error: params.error.details });
       }
       const { email, password } = params.value;
 
@@ -106,25 +106,25 @@ export default class UserService implements IUserService.IUserServiceAPI {
       try {
         user = await this.storage.getByAttributes(email);
       } catch (e) {
-        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value));
+        logger.error(MessageEnum.logMessage.INVALID_REQUEST, JSON.stringify(params.error))
         SendResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: e.message });
       }
 
       if (!user) {
-        logger.error(LogsMessage.INVALID_REQUEST, JSON.stringify(params?.value));
-        SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.INVALID_REQUEST });
+        logger.error(MessageEnum.logMessage.DUPLICATE_USER_EXIST,JSON.stringify(params.error))
+        SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message:  MessageEnum.user.INVALID_REQUEST });
       }
       // check If user password has been verified 
       const comparePassword = await this.authService.comparePassword(password, user.password);
       if (!comparePassword) {
-        logger.error(LogsMessage.PASSWORD_NOT_MATCH, JSON.stringify(params?.value));
-        SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: ErrorMessageEnum.PASSWORD_NOT_MATCH });
+        logger.error(MessageEnum.logMessage.DUPLICATE_USER_EXIST,JSON.stringify(params.error))
+        SendResponse(StatusCodeEnum.BAD_REQUEST, { success: false, message: MessageEnum.user.PASSWORD_NOT_MATCH });
       }
       const token: any = await this.authService.createToken(user);
       const response: any = { ...user, token };
-      SendResponse(StatusCodeEnum.OK, { success: true, message: ErrorMessageEnum.LOGIN_SUCCESSFULY, data: response });
+      SendResponse(StatusCodeEnum.OK, { success: true, message: MessageEnum.user.LOGIN_SUCCESSFULY, data: response });
     } catch (err) {
-      logger.error(LogsMessage.INTERNAL_SERVER_ERROR, JSON.stringify(err));
+      logger.error(MessageEnum.logMessage.INTERNAL_SERVER_ERROR,JSON.stringify(err))
       SendResponse(StatusCodeEnum.INTERNAL_SERVER_ERROR, { success: false, message: err.message });
     }
   };
